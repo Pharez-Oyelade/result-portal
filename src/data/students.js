@@ -1,26 +1,26 @@
 export const students = [
     {
-        id: "stu001",
+        regNo: "stu001",
         name: "Alice Johnson",
     },
     {
-        id: "stu002",
+        regNo: "stu002",
         name: "Bob Smith",
     },
     {
-        id: "stu003",
+        regNo: "stu003",
         name: "Charlie Brown",
     },
     {
-        id: "stu004",
+        regNo: "stu004",
         name: "David Wilson",
     },
     {
-        id: "stu005",
+        regNo: "stu005",
         name: "Eva Green",
     },
     {
-        id: "stu006",
+        regNo: "stu006",
         name: "Frank White",
     }
 ]
