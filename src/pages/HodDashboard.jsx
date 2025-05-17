@@ -1,17 +1,47 @@
-import React, { useState } from 'react'
-import { getCourses, saveCourses } from '../data/courses';
-import { lecturers } from '../data/lecturers';
+import React, { useEffect, useState } from 'react'
+// import { getCourses, saveCourses } from '../data/courses';
+// import { lecturers } from '../data/lecturers';
+import { users } from '../data/users';
+import { courses } from '../data/courses';
 import { useAuth } from '../context/AuthContext'
 
 const HodDashboard = () => {
     const { user, logout } = useAuth();
-    const [courses, setCourses] = useState(getCourses());
+    const [selectedLecturer, setSelectedLecturer] = useState({}); 
+    const [assignments, setAssignments] = useState([]);
+    // const [courses, setCourses] = useState(getCourses());
 
-    const handleAssign = (courseId, lecturerEmail) => {
-      const updatedCourses = courses.map(course => course.id === courseId ? { ...course, assignedTo: lecturerEmail } : course);
-      setCourses(updatedCourses);
-      saveCourses(updatedCourses);
+    useEffect(() => {
+      const saved = JSON.parse(localStorage.getItem("courseAssignments")) || [];
+      setAssignments(saved);
+    }, []);
+
+    const lecturers = users.filter(user => user.role === "lecturer");
+
+    const handleAssign = (courseId) => {
+      const lecturerEmail = selectedLecturer[courseId];
+      if (!lecturerEmail) return alert("Please select a lecturer to assign");
+
+      //prevent duplicate assignments
+      const alreadyAssigned = assignments.find(a => a.courseId === courseId);
+
+      let updatedAssignments;
+      if (alreadyAssigned) {
+        updatedAssignments= assignments.map(a => a.courseId === courseId ? { ...a, lecturerEmail } : a);
+      } else {
+        updatedAssignments = [...assignments, { courseId, lecturerEmail }];
+      }
+
+      localStorage.setItem("courseAssignments", JSON.stringify(updatedAssignments));
+      setAssignments(updatedAssignments);
     };
+
+    const getAssignedLecturer = (courseId) => {
+      const assignment = assignments.find(a => a.courseId === courseId);
+      if (!assignment) return 'Not Assigned';
+      const lecturer = lecturers.find(l => l.email === assignment.lecturerEmail);
+      return lecturer ? lecturer.name : assignment.lecturerEmail;
+    }
 
   return (
     <div className='p-6'>
@@ -24,18 +54,17 @@ const HodDashboard = () => {
             <div key={course.id} className="border p-4 rounded-lg shadow bg-white">
               <h3 className='font-semibold'>{course.name}</h3>
               <p className='text-sm mb-2'>
-                Assigned to: {" "}
-                <span>
-                  {course.assignedTo || "Not Assigned"}
-                </span>
+               Assigned to: <strong>{getAssignedLecturer(course.id)}</strong>
               </p>
 
-              <select className='border p-2 mr-2' value={course.assignedTo || ""} onChange={(e) => handleAssign(course.id, e.target.value) }>
+              <select className='border rounded w-full p-2 mb-2' value={selectedLecturer[course.id] || ""} onChange={(e) => setSelectedLecturer({ ...selectedLecturer, [course.id]: e.target.value })}>
                 <option value="">-- Assign Lecturer --</option>
                 {lecturers.map((lecturer) => (
                   <option key={lecturer.email} value={lecturer.email}>{lecturer.name}</option>
                 ))}
               </select>
+
+              <button className='bg-blue-500 text-white px-4 py-1 rounded' onClick={() => handleAssign(course.id)}>Assign</button>
             </div>
           ))}
         </div>

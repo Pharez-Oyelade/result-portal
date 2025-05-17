@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { courses } from '../data/courses';
@@ -6,9 +6,21 @@ import { courses } from '../data/courses';
 const LecturerDashboard = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const [myCourses, setMyCourses] = useState([]); // State to store courses assigned to the logged-in user
 
-    //filter courses assigned to the logged-in user
-    const myCourses = courses.filter(course => course.assignedTo === user.email);
+    useEffect(() => {
+      // Fetch courses from local storage
+      const assignments = JSON.parse(localStorage.getItem("courseAssignments")) || [];
+
+      // Filter courses assigned to the logged-in user
+      const assignedCourseIds = assignments
+        .filter(a => a.lecturerEmail === user.email)
+        .map(a => a.courseId);
+
+      const assignedCourses = courses.filter(course => assignedCourseIds.includes(course.id));
+      setMyCourses(assignedCourses);
+    }, [user.email])
+
 
   return (
     <div className='p-6'>
