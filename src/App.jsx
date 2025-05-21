@@ -13,8 +13,23 @@ function PrivateRoute({ children }) {
   return user ? children : <Navigate to="/" />;
 }
 
-function App() {
+// NavBar should not be exported, only used inside App
+function NavBar() {
+  const { user, logout } = useAuth();
+  if (!user) return null;
+  return (
+    <nav className="bg-gray-800 text-white px-4 py-2 flex gap-4 items-center">
+      <Link to="/dashboard">Home</Link>
+      {user.role === "admin" && <Link to="/admin">Admin</Link>}
+      {user.role === "hod" && <Link to="/hod">HOD</Link>}
+      {user.role === "lecturer" && <Link to="/lecturer">Lecturer</Link>}
+      <Link to="/results">Result Sheet</Link>
+      <button onClick={logout} className="ml-auto bg-red-500 px-3 py-1 rounded">Logout</button>
+    </nav>
+  );
+}
 
+function App() {
   return (
     <AuthProvider>
       <Router>
@@ -72,22 +87,7 @@ function App() {
         </Routes>
       </Router>
     </AuthProvider>
-   
-  )
-}
-
-// Add a navigation bar for all authenticated users
-export default function NavBar() {
-  const { user, logout } = useAuth();
-  if (!user) return null;
-  return (
-    <nav className="bg-gray-800 text-white px-4 py-2 flex gap-4 items-center">
-      <Link to="/dashboard">Home</Link>
-      {user.role === "admin" && <Link to="/admin">Admin</Link>}
-      {user.role === "hod" && <Link to="/hod">HOD</Link>}
-      {user.role === "lecturer" && <Link to="/lecturer">Lecturer</Link>}
-      <Link to="/results">Result Sheet</Link>
-      <button onClick={logout} className="ml-auto bg-red-500 px-3 py-1 rounded">Logout</button>
-    </nav>
   );
 }
+
+export default App;
