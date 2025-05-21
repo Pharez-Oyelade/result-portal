@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useState } from 'react'
 import { students } from '../data/students'
@@ -10,6 +10,7 @@ import { getResults, addOrUpdateResult } from '../utils/storage'
 const ResultUpload = () => {
     const { user } = useAuth();
     const { courseId } = useParams();
+    const navigate = useNavigate();
     const course = courses.find(course => course.id === courseId);
     const [results, setResults] = useState([]);
     const [submitted, setSubmitted] = useState(false);
@@ -64,6 +65,12 @@ const ResultUpload = () => {
     
   return (
     <div className='p-6'>
+        <button
+            onClick={() => navigate('/lecturer')}
+            className='mb-4 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded'
+        >
+            ← Back to Lecturer Dashboard
+        </button>
         <h1 className='text-2xl font-bold mb-4'>Upload Results for: {course.name}</h1>
 
         <form onSubmit={handleSubmit} className='space-y-4'>
