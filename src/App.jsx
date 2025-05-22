@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import Logo from "./assets/logoipsum-365.svg";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import HodDashboard from "./pages/HodDashboard";
@@ -7,6 +8,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import LecturerDashboard from "./pages/LecturerDashboard";
 import ResultUpload from "./pages/ResultUpload";
 import ResultSheet from "./pages/ResultSheet";
+
 
 function PrivateRoute({ children }) {
   const { user } = useAuth();
@@ -19,6 +21,7 @@ function NavBar() {
   if (!user) return null;
   return (
     <nav className="bg-gray-800 text-white px-4 py-2 flex gap-4 items-center">
+      <img src={Logo} alt="" />
       <Link to="/dashboard">Home</Link>
       {user.role === "admin" && <Link to="/admin">Admin</Link>}
       {user.role === "hod" && <Link to="/hod">HOD</Link>}

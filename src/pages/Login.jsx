@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import Logo from "../assets/logoipsum-365.svg"
 
 export default function Login() {
     const [email, setEmail] = useState("");
@@ -26,7 +27,9 @@ export default function Login() {
 return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md w-96">
-            <h2 className="text-2xl font-bold mb-4">Login</h2>
+            <div className="flex items-center justify-center mb-5"><img src={Logo} alt=""  /></div>
+            
+            <h2 className="text-2xl font-bold mb-4 text-center">Login</h2>
             {error && <p className="text-red-500 mb-4">{error}</p>}
             <input 
             className="border p-2 w-full mb-3" placeholder="Email" 
