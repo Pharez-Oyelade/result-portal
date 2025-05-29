@@ -51,6 +51,56 @@ const ResultSheet = () => {
     }
   };
 
+  // Approve all results and CGPAs for all students (admin only)
+  const handleApproveAll = () => {
+    // Approve all pending results
+    const updatedResults = results.map((result) =>
+      result.status !== "approved" ? { ...result, status: "approved" } : result
+    );
+    setResults(updatedResults);
+    localStorage.setItem("student_results", JSON.stringify(updatedResults));
+
+    // Approve and update CGPA for all students
+    const studentsData =
+      JSON.parse(localStorage.getItem("students")) || students;
+    filteredStudents.forEach((student) => {
+      const studentResult = updatedResults.find(
+        (r) => r.regNo === student.regNo
+      );
+      if (studentResult && studentResult.status === "approved") {
+        // Calculate new CGPA for this student
+        const validResults = studentResult.results.filter((r) => {
+          const course = courses.find((c) => c.id === r.courseId);
+          if (!course) return false;
+          const { grade } = getGrade(r.score);
+          return grade !== "AR";
+        });
+        let totalUnits = 0;
+        let totalPoints = 0;
+        validResults.forEach((r) => {
+          const course = courses.find((c) => c.id === r.courseId);
+          if (course && course.point) {
+            const { points } = getGrade(r.score);
+            totalUnits += course.point;
+            totalPoints += points * course.point;
+          }
+        });
+        const gpa = totalUnits > 0 ? totalPoints / totalUnits : 0;
+        const idx = studentsData.findIndex((s) => s.regNo === student.regNo);
+        const previousCgpa =
+          studentsData[idx] && studentsData[idx].cgpa
+            ? Number(studentsData[idx].cgpa)
+            : 0;
+        const newCgpa = previousCgpa > 0 ? (previousCgpa + gpa) / 2 : gpa;
+        if (idx !== -1) {
+          studentsData[idx].cgpa = newCgpa;
+        }
+      }
+    });
+    localStorage.setItem("students", JSON.stringify(studentsData));
+    setCgpaApproved(true);
+  };
+
   return (
     <div className="p-6 max-w-2xl  mx-auto ">
       <h1 className="text-2xl font-bold mb-4">Student Result Sheet</h1>
@@ -85,6 +135,7 @@ const ResultSheet = () => {
           <h2 className="text-lg font-semibold mb-2">{student.name}</h2>
           {studentResult && studentResult.results.length > 0 ? (
             <div>
+              {/* Main Results Table */}
               <table className="w-full border mt-2">
                 <thead>
                   <tr>
@@ -98,23 +149,34 @@ const ResultSheet = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {studentResult.results.map((r, idx) => {
-                    const course = courses.find((c) => c.id === r.courseId);
-                    const { grade, points, remark } = getGrade(r.score);
+                  {/* For admin, show all courses for the student's department, including ARs */}
+                  {(user.role === "admin"
+                    ? courses.filter((c) => c.department === student.department)
+                    : studentResult.results
+                        .map((r) => courses.find((c) => c.id === r.courseId))
+                        .filter(Boolean)
+                  ).map((course, idx) => {
+                    const result = studentResult.results.find(
+                      (r) => r.courseId === course.id
+                    );
+                    let score = result ? result.score : null;
+                    let { grade, points, remark } = result
+                      ? getGrade(result.score)
+                      : { grade: "AR", points: 0, remark: "Awaiting Result" };
+                    // If AR, show as AR and do not count towards CGPA
                     return (
-                      <tr key={idx}>
+                      <tr key={course.id}>
                         <td className="border px-2 py-1">
-                          {course ? course.id.toUpperCase() : r.courseId}
+                          {course.id.toUpperCase()}
                         </td>
-                        <td className="border px-2 py-1">
-                          {course ? course.name : r.courseId}
-                        </td>
+                        <td className="border px-2 py-1">{course.name}</td>
                         <td className="border px-2 py-1">{course.point}</td>
-                        <td className="border px-2 py-1">{r.score}</td>
-
+                        <td className="border px-2 py-1">
+                          {score !== null && score !== undefined ? score : "AR"}
+                        </td>
                         <td className="border px-2 py-1">{grade}</td>
                         <td className="border px-2 py-1">
-                          {points * course.point}
+                          {grade === "AR" ? "-" : points * course.point}
                         </td>
                         <td className="border px-2 py-1">{remark}</td>
                       </tr>
@@ -123,21 +185,93 @@ const ResultSheet = () => {
                 </tbody>
               </table>
 
+              {/* Outstanding Results Table (ARs and failed courses) */}
+              {(() => {
+                // Find ARs and failed courses (grade F or AR)
+                const allCourses = courses.filter(
+                  (c) => c.department === student.department
+                );
+                const arAndFailed = allCourses.filter((course) => {
+                  const result = studentResult.results.find(
+                    (r) => r.courseId === course.id
+                  );
+                  if (!result) return true; // AR
+                  const { grade } = getGrade(result.score);
+                  return grade === "F";
+                });
+                // Persist outstanding courses in localStorage for the student
+                if (arAndFailed.length > 0) {
+                  let outstandingData = JSON.parse(
+                    localStorage.getItem("outstandingResults") || "{}"
+                  );
+                  outstandingData[student.regNo] = Array.from(
+                    new Set([
+                      ...(outstandingData[student.regNo] || []),
+                      ...arAndFailed.map((c) => c.id),
+                    ])
+                  );
+                  localStorage.setItem(
+                    "outstandingResults",
+                    JSON.stringify(outstandingData)
+                  );
+                }
+                if (arAndFailed.length > 0) {
+                  return (
+                    <>
+                      <div className="flex items-center justify-center mt-6">
+                        <span className="p-3 font-bold">
+                          Outstanding Results
+                        </span>
+                      </div>
+                      <table className="w-full border mt-2">
+                        <thead>
+                          <tr>
+                            <th className="border px-2 py-1">Course Code</th>
+                            <th className="border px-2 py-1">COURSE TITLE</th>
+                            <th className="border px-2 py-1">UNIT</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {arAndFailed.map((course) => (
+                            <tr key={course.id}>
+                              <td className="border px-2 py-1">
+                                {course.id.toUpperCase()}
+                              </td>
+                              <td className="border px-2 py-1">
+                                {course.name}
+                              </td>
+                              <td className="border px-2 py-1">
+                                {course.point}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </>
+                  );
+                }
+                return null;
+              })()}
+
               {/* Calculate semester, total units, total points, GPA, and class */}
               {(() => {
-                // Get all course objects for the student's results
-                const resultCourses = studentResult.results
+                // Only count results that are not AR for CGPA
+                const validResults = studentResult.results.filter((r) => {
+                  const course = courses.find((c) => c.id === r.courseId);
+                  if (!course) return false;
+                  const { grade } = getGrade(r.score);
+                  return grade !== "AR";
+                });
+                const resultCourses = validResults
                   .map((r) => courses.find((c) => c.id === r.courseId))
                   .filter(Boolean);
-                // Get all semesters present in the result (should be one, but fallback to first if multiple)
                 const semesters = Array.from(
                   new Set(resultCourses.map((c) => c.semester))
                 );
                 const semester = semesters.length > 0 ? semesters[0] : "";
-                // Calculate total units and total points
                 let totalUnits = 0;
                 let totalPoints = 0;
-                studentResult.results.forEach((r) => {
+                validResults.forEach((r) => {
                   const course = courses.find((c) => c.id === r.courseId);
                   if (course && course.point) {
                     const { points } = getGrade(r.score);
@@ -145,9 +279,7 @@ const ResultSheet = () => {
                     totalPoints += points * course.point;
                   }
                 });
-                // Calculate GPA
                 const gpa = totalUnits > 0 ? totalPoints / totalUnits : 0;
-                // Determine class
                 let gpaClass = "";
                 if (gpa >= 4.5) gpaClass = "First Class";
                 else if (gpa >= 3.5) gpaClass = "Second Class Upper";
@@ -244,6 +376,17 @@ const ResultSheet = () => {
               No approved results found for this student.
             </p>
           )}
+        </div>
+      )}
+
+      {user && user.role === "admin" && (
+        <div className="flex items-center justify-center mt-2">
+          <button
+            className="bg-blue-600 text-white px-4 py-2 rounded mr-2"
+            onClick={handleApproveAll}
+          >
+            Approve All Results & CGPA
+          </button>
         </div>
       )}
     </div>

@@ -42,6 +42,7 @@ export const courses = [
     {
         id: "csc109",
         name: "Computer Networks",
+        point: 3,
         assignedTo: null,
         department: "Computer Science"
     },
