@@ -42,9 +42,12 @@ const ResultUpload = () => {
       const courseEntry = studentResult
         ? studentResult.results.find((r) => r.courseId === courseId)
         : null;
+      // Check if result is approved
+      const isApproved = studentResult && studentResult.status === "approved";
       return {
         ...student,
         score: courseEntry ? courseEntry.score : "",
+        isApproved: isApproved,
       };
     });
 
@@ -110,7 +113,11 @@ const ResultUpload = () => {
               className="border p-2 w-24"
               placeholder="Enter score"
               required
+              disabled={student.isApproved}
             />
+            {student.isApproved && (
+              <span className="text-green-600 ml-2">Approved</span>
+            )}
           </div>
         ))}
 
@@ -118,6 +125,7 @@ const ResultUpload = () => {
         <button
           type="submit"
           className="mt-4 bg-green-600 text-white px-6 py-2 rounded"
+          disabled={results.some((s) => s.isApproved)}
         >
           Submit Results
         </button>

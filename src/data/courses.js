@@ -2,35 +2,45 @@ export const courses = [
     {
         id: "csc101",
         name: "Introduction to Computer Science",
+        point: 2,
+        semester: "first",
         assignedTo: null,
-        department: "Computer Science"
-    },
-    {
-        id: "csc102",
-        name: "Data Structures and Algorithms",
-        assignedTo: "carter@demo.edu",
         department: "Computer Science"
     },
     {
         id: "csc103",
-        name: "Database Management Systems",
+        name: "Data Structures and Algorithms",
+        point: 4,
+        semester: "first",
         assignedTo: "carter@demo.edu",
         department: "Computer Science"
     },
     {
-        id: "csc104",
-        name: "Operating Systems",
-        assignedTo: null,
-        department: "Computer Science"
-    },
-    {
         id: "csc105",
-        name: "Software Engineering",
+        name: "Database Management Systems",
+        point: 3,
+        semester: "first",
+        assignedTo: "carter@demo.edu",
+        department: "Computer Science"
+    },
+    {
+        id: "csc119",
+        name: "Operating Systems",
+        point: 3,
+        semester: "first",
         assignedTo: null,
         department: "Computer Science"
     },
     {
-        id: "csc106",
+        id: "csc115",
+        name: "Software Engineering",
+        point: 5,
+        semester: "first",
+        assignedTo: null,
+        department: "Computer Science"
+    },
+    {
+        id: "csc109",
         name: "Computer Networks",
         assignedTo: null,
         department: "Computer Science"
